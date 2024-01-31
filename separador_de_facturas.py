@@ -1,3 +1,5 @@
+import logging
+
 import PyPDF2
 import os
 import tkinter as tk
@@ -8,6 +10,7 @@ from pdf2image import convert_from_path
 
 
 contador_de_errores = 0
+logging.basicConfig(level=logging.DEBUG)
 
 def obtener_numero_factura(pdf_path, num_pagina):
     global contador_de_errores
@@ -16,11 +19,12 @@ def obtener_numero_factura(pdf_path, num_pagina):
     if imagenes:
         # Utilizar pytesseract para extraer texto de la imagen
         texto_extraido = pytesseract.image_to_string(imagenes[0])
-        patron = r'FACTURA N.+:\s*(\d+)'
+        patron = fr'{entry_patron.get()}[\s\D]+[\d]?[\s\D]+(\d+)'
         # Buscar coincidencias en el texto
         coincidencias = re.search(patron, texto_extraido)
         # Si hay coincidencias, devolver el número encontrado
         if coincidencias:
+            logging.debug(f"Coincidencia: {coincidencias.group(1)}")
             numero_factura = coincidencias.group(1)
             return numero_factura
         else:
@@ -65,7 +69,8 @@ def separar_pdf_gui():
     carpeta_salida = entry_carpeta.get()
 
     if not pdf_path or not carpeta_salida:
-        tk.messagebox.showwarning("Error", "Por favor, selecciona un archivo PDF y una carpeta de salida.")
+        tk.messagebox.showwarning("Error", "Por favor, selecciona un archivo PDF y"
+                                           " una carpeta de salida.")
         return
 
     separar_pdf(pdf_path, carpeta_salida)
@@ -77,19 +82,25 @@ app = tk.Tk()
 app.title("Separador de PDFs")
 
 # Etiqueta y entrada para el PDF
+tk.Label(app, text="Escriba el texto previo al numero de factura"
+                   " (evite caracteres especiales):").pack()
+entry_patron = tk.Entry(app, width=50)
+entry_patron.pack(pady=10)
+
+# Etiqueta y entrada para el PDF
 tk.Label(app, text="Selecciona un archivo PDF:").pack()
 entry_pdf = tk.Entry(app, width=50)
 entry_pdf.pack()
-tk.Button(app, text="Buscar", command=seleccionar_pdf).pack()
+tk.Button(app, text="Buscar", command=seleccionar_pdf, pady=10).pack()
 
 # Etiqueta y entrada para la carpeta de salida
 tk.Label(app, text="Selecciona una carpeta de salida:").pack()
 entry_carpeta = tk.Entry(app, width=50)
 entry_carpeta.pack()
-tk.Button(app, text="Buscar", command=seleccionar_carpeta).pack()
+tk.Button(app, text="Buscar", command=seleccionar_carpeta, pady=10).pack()
 
 # Botón para separar el PDF
-tk.Button(app, text="Separar PDF", command=separar_pdf_gui).pack()
+tk.Button(app, text="Separar PDF", command=separar_pdf_gui, pady=10).pack()
 
 app.mainloop()
 
